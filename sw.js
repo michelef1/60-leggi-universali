@@ -41,21 +41,23 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (request.method !== 'GET') return;
 
+  // Only intercept same-origin requests. Let cross-origin CDN requests
+  // (Tailwind, FontAwesome, Google Fonts) pass through untouched —
+  // intercepting them can cause PWA analysis tools to hang.
+  if (!request.url.startsWith(self.location.origin)) return;
+
   event.respondWith(
     caches.match(request).then((cached) => {
-      const networkFetch = fetch(request)
+      if (cached) return cached;
+      return fetch(request)
         .then((response) => {
-          // Update cache with fresh copy for same-origin requests
-          if (response && response.status === 200 && request.url.startsWith(self.location.origin)) {
+          if (response && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
           return response;
         })
-        .catch(() => cached); // offline fallback to cache
-
-      // Cache-first for app shell, otherwise race network with cache fallback
-      return cached || networkFetch;
+        .catch(() => caches.match('./index.html'));
     })
   );
 });
