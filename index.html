@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>60 Leggi Universali — Il Tempio della Coscienza</title>
+<meta name="description" content="App interattiva di crescita personale basata sulle 60 Leggi Universali: legge del giorno, rituale del distacco, diario della gratitudine e streak di pratica quotidiana.">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D0A1E">
+<meta name="background-color" content="#0D0A1E">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+<!-- iOS standalone support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="60 Leggi">
+
+<!-- Android / Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #F5D97A;
+    --purple-deep: #0D0A1E;
+    --purple-mid: #1A1035;
+    --purple-glass: rgba(138, 90, 200, 0.12);
+    --blue-night: #0F1729;
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(212,175,55,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0D0A1E 0%, #0F1729 40%, #1A0A2E 70%, #0A0F1E 100%);
+    min-height: 100vh;
+    color: #E8E0F0;
+    overflow-x: hidden;
+  }
+
+  /* === STARFIELD === */
+  #starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: var(--max-op); transform: scale(1.2); }
+  }
+
+  /* === TYPOGRAPHY === */
+  .font-display { font-family: 'Cinzel', serif; }
+
+  /* === GLASS CARDS === */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(212,175,55,0.18);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .glass-gold {
+    background: rgba(212,175,55,0.07);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(212,175,55,0.12), inset 0 1px 0 rgba(212,175,55,0.15);
+  }
+
+  /* === GRADIENT TEXT === */
+  .text-gold { color: var(--gold); }
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #D4AF37, #F5D97A, #D4AF37);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-mystic {
+    background: linear-gradient(135deg, #C77DFF, #E0AAFF, #9D4EDD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* === STREAK COUNTER === */
+  #streak-bar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,8,25,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+  }
+  .streak-fire {
+    animation: flamePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes flamePulse {
+    0%,100% { transform: scale(1); filter: drop-shadow(0 0 4px #ff6b35); }
+    50% { transform: scale(1.2); filter: drop-shadow(0 0 12px #ff9500); }
+  }
+
+  /* === BUTTONS === */
+  .btn-primary {
+    background: linear-gradient(135deg, #7B2FBE, #9D4EDD, #7B2FBE);
+    background-size: 200% 200%;
+    color: white;
+    border: 1px solid rgba(157,78,221,0.5);
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #9D4EDD, #C77DFF);
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 50px;
+  }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(157,78,221,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-gold {
+    background: linear-gradient(135deg, #B8860B, #D4AF37, #B8860B);
+    background-size: 200% 200%;
+    color: #0D0A1E;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(212,175,55,0.45); filter: brightness(1.1); }
+  .btn-gold:active { transform: translateY(0); }
+
+  .btn-release {
+    background: linear-gradient(135deg, #2D1B69, #4A0080);
+    color: #E0AAFF;
+    border: 1px solid rgba(167,139,250,0.4);
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.05em;
+  }
+  .btn-release:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(74,0,128,0.5); background: linear-gradient(135deg, #4A0080, #6B21A8); }
+
+  /* === TEXTAREA === */
+  .mystic-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 14px;
+    padding: 16px;
+    color: #E8E0F0;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    line-height: 1.6;
+  }
+  .mystic-textarea:focus {
+    border-color: rgba(199,125,255,0.6);
+    box-shadow: 0 0 0 3px rgba(157,78,221,0.15), 0 0 20px rgba(157,78,221,0.1);
+  }
+  .mystic-textarea::placeholder { color: rgba(200,180,230,0.35); }
+
+  /* === PILLAR TABS === */
+  .pillar-tab {
+    padding: 10px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(212,175,55,0.2);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: rgba(220,200,255,0.7);
+    background: transparent;
+    white-space: nowrap;
+  }
+  .pillar-tab:hover {
+    border-color: rgba(212,175,55,0.5);
+    color: var(--gold);
+    background: rgba(212,175,55,0.07);
+  }
+  .pillar-tab.active {
+    background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1));
+    border-color: var(--gold);
+    color: var(--gold-light);
+    box-shadow: 0 4px 20px rgba(212,175,55,0.2);
+  }
+
+  /* === LAW CARD === */
+  #law-card {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #law-card.hidden-card {
+    opacity: 0; transform: translateY(20px) scale(0.96);
+  }
+  #law-card.visible-card {
+    opacity: 1; transform: translateY(0) scale(1);
+  }
+
+  /* === DISSOLUTION ANIMATION === */
+  #ritual-text-wrapper {
+    position: relative;
+  }
+  #ritual-text-display {
+    transition: all 0.8s ease;
+  }
+  #ritual-text-display.dissolving {
+    opacity: 0;
+    transform: scale(1.05);
+    filter: blur(8px);
+  }
+  #release-message {
+    display: none;
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === PARTICLE CANVAS === */
+  #particle-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 14px;
+  }
+
+  /* === GRATITUDE ITEMS === */
+  .gratitude-item {
+    animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    opacity: 0;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* === SECTION REVEALS === */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* === PILLAR CONTENT === */
+  #pillar-content {
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  #pillar-content.switching {
+    opacity: 0; transform: translateY(10px);
+  }
+
+  /* === DIVIDER === */
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
+    margin: 2rem 0;
+  }
+
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.3); border-radius: 3px; }
+
+  /* === ORBIT DECORATION === */
+  .orbit-ring {
+    position: absolute;
+    border: 1px solid rgba(212,175,55,0.08);
+    border-radius: 50%;
+    animation: orbit-rotate 40s linear infinite;
+  }
+  @keyframes orbit-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* === LAW NUMBER BADGE === */
+  .law-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.1));
+    border: 1px solid rgba(212,175,55,0.4);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  /* === HERO GLOW === */
+  .hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  
+  /* === CHALLENGE BADGE === */
+  .challenge-box {
+    background: linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.03));
+    border: 1px solid rgba(212,175,55,0.25);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  /* Input for gratitude */
+  .gratitude-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(167,139,250,0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #E8E0F0;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .gratitude-input:focus {
+    border-color: rgba(212,175,55,0.5);
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+  }
+  .gratitude-input::placeholder { color: rgba(200,180,230,0.3); }
+
+  /* === TTS BUTTON === */
+  .btn-tts {
+    background: rgba(255,255,255,0.05);
+    color: rgba(200,180,255,0.8);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn-tts:hover {
+    background: rgba(167,139,250,0.12);
+    border-color: rgba(167,139,250,0.6);
+    color: #E0AAFF;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(157,78,221,0.25);
+  }
+  .btn-tts.speaking {
+    background: rgba(157,78,221,0.18);
+    border-color: rgba(199,125,255,0.7);
+    color: #E0AAFF;
+    box-shadow: 0 0 0 3px rgba(157,78,221,0.15), 0 8px 24px rgba(157,78,221,0.3);
+  }
+  .btn-tts.speaking .tts-pulse {
+    animation: ttsPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes ttsPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+  }
+
+
+    .pillar-tab { padding: 8px 14px; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<div id="starfield"></div>
+
+<!-- ORBIT DECORATIONS -->
+<div style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0">
+  <div class="orbit-ring" style="width:600px;height:600px;top:-200px;right:-200px;opacity:0.6"></div>
+  <div class="orbit-ring" style="width:400px;height:400px;bottom:-150px;left:-150px;animation-direction:reverse;opacity:0.4"></div>
+</div>
+
+<!-- STREAK BAR -->
+<div id="streak-bar" class="px-4 py-3">
+  <div class="max-w-4xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-fire streak-fire text-orange-400 text-xl"></i>
+      <div>
+        <div class="flex items-baseline gap-1.5">
+          <span id="streak-count" class="font-display text-gold-gradient font-bold text-2xl">0</span>
+          <span class="text-xs text-purple-300 font-medium">giorni di pratica</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-purple-300">
+      <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+      <span id="streak-label">Inizia oggi</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="relative z-10 max-w-4xl mx-auto px-4 pb-20">
+
+  <!-- ===== HERO ===== -->
+  <div class="relative text-center py-16 md:py-24">
+    <div class="hero-glow w-96 h-96 bg-purple-600 opacity-10 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs font-medium mb-6 tracking-widest uppercase">
+      <i class="fa-solid fa-infinity"></i>
+      Il Tempio della Coscienza
+    </div>
+    <h1 class="font-display text-4xl md:text-6xl font-bold text-gold-gradient leading-tight mb-4">
+      60 Leggi Universali
+    </h1>
+    <p class="text-purple-200 text-lg md:text-xl font-light max-w-xl mx-auto leading-relaxed opacity-80">
+      Principi eterni che governano l'esistenza. Conosci le leggi, trasforma la tua realtà.
+    </p>
+    <div class="gold-divider mt-10"></div>
+  </div>
+
+  <!-- ===== LEGGE DEL GIORNO ===== -->
+  <section class="reveal mb-10">
+    <div class="glass p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center">
+          <i class="fa-solid fa-sun text-yellow-400"></i>
+        </div>
+        <h2 class="font-display text-xl text-gold-gradient font-semibold">La Legge del Giorno</h2>
+      </div>
+
+      <div id="law-card" class="hidden-card">
+        <div class="glass-gold p-5 md:p-6 mb-4">
+          <div class="flex items-start gap-4">
+            <span id="law-number" class="law-badge mt-1">1</span>
+            <div class="flex-1">
+              <p class="text-xs text-gold/60 uppercase tracking-widest mb-1">Legge Universale</p>
+              <h3 id="law-name" class="font-display text-2xl md:text-3xl text-gold-gradient font-bold mb-3">—</h3>
+              <p id="law-desc" class="text-purple-100 leading-relaxed text-sm md:text-base opacity-90"></p>
+            </div>
+          </div>
+        </div>
+        <div class="challenge-box">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-bolt text-yellow-400 text-sm"></i>
+            <span class="text-xs font-semibold uppercase tracking-wider text-gold">Sfida Pratica del Giorno</span>
+          </div>
+          <p id="law-challenge" class="text-purple-100 text-sm leading-relaxed"></p>
+        </div>
+      </div>
+
+      <div id="law-placeholder" class="text-center py-8">
+        <i class="fa-solid fa-wand-magic-sparkles text-purple-400 text-4xl mb-3 opacity-40"></i>
+        <p class="text-purple-300 opacity-50 text-sm">Estrai la tua legge del giorno</p>
+      </div>
+
+      <div class="mt-5 flex gap-3 flex-wrap items-center">
+        <button class="btn-gold flex items-center gap-2" onclick="drawLaw()">
+          <i class="fa-solid fa-shuffle"></i> Estrai la Legge
+        </button>
+        <button class="btn-primary flex items-center gap-2 text-sm" onclick="markChallengeDone()">
+          <i class="fa-solid fa-check-circle"></i> Sfida completata
+        </button>
+        <button id="tts-btn" class="btn-tts flex items-center gap-2 text-sm" onclick="toggleSpeak()" title="Ascolta la legge">
+          <i id="tts-icon" class="fa-solid fa-volume-high"></i>
+          <span id="tts-label">Ascolta</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RITUALE DEL DISTACCO ===== -->
+  <section class="reveal mb-10">
+    <div class="glass p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 rounded-full bg-purple-500/15 border border-purple-500/30 flex items-center justify-center">
+          <i class="fa-solid fa-feather-pointed text-purple-300"></i>
+        </div>
+        <h2 class="font-display text-xl text-mystic font-semibold">Il Rituale del Distacco</h2>
+      </div>
+      <p class="text-purple-300 text-sm mb-6 ml-1 opacity-70">Scrivi ciò che ti pesa. Poi lascialo andare.</p>
+
+      <div id="ritual-text-wrapper" class="relative">
+        <canvas id="particle-canvas"></canvas>
+        <div id="ritual-text-display">
+          <textarea id="ritual-textarea" class="mystic-textarea" rows="4" placeholder="Scrivi qui un'ansia, un pensiero pesante, qualcosa che vuoi liberare…"></textarea>
+        </div>
+        <div id="release-message" class="glass-gold p-5 text-center rounded-2xl">
+          <i class="fa-solid fa-dove text-purple-300 text-3xl mb-3"></i>
+          <p id="release-quote" class="text-purple-100 text-base leading-relaxed font-light italic"></p>
+          <p class="text-gold/50 text-xs mt-3 tracking-wider">— Il Tempio della Coscienza</p>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <button class="btn-release flex items-center gap-2 mx-auto" onclick="performRelease()">
+          <i class="fa-solid fa-wind"></i> Lascia Andare
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DIARIO DELLA GRATITUDINE ===== -->
+  <section class="reveal mb-10">
+    <div class="glass p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+          <i class="fa-solid fa-heart text-green-400"></i>
+        </div>
+        <h2 class="font-display text-xl font-semibold" style="background:linear-gradient(135deg,#6EE7B7,#34D399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+          Il Diario della Gratitudine
+        </h2>
+      </div>
+      <p class="text-purple-300 text-sm mb-6 ml-1 opacity-70">Tre cose per cui sei grato oggi elevano la tua vibrazione.</p>
+
+      <div class="space-y-3 mb-4" id="gratitude-inputs">
+        <div class="flex items-center gap-3">
+          <span class="text-gold text-sm font-bold w-5 text-right flex-shrink-0">1.</span>
+          <input type="text" class="gratitude-input" id="grat-1" placeholder="Sono grato per…" />
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-gold text-sm font-bold w-5 text-right flex-shrink-0">2.</span>
+          <input type="text" class="gratitude-input" id="grat-2" placeholder="Sono grato per…" />
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-gold text-sm font-bold w-5 text-right flex-shrink-0">3.</span>
+          <input type="text" class="gratitude-input" id="grat-3" placeholder="Sono grato per…" />
+        </div>
+      </div>
+
+      <button class="btn-primary flex items-center gap-2 text-sm mb-8" onclick="saveGratitude()">
+        <i class="fa-solid fa-seedling"></i> Salva nel Diario
+      </button>
+
+      <div id="gratitude-log">
+        <div id="gratitude-empty" class="text-center py-6 hidden">
+          <i class="fa-solid fa-book-open text-purple-400 opacity-20 text-3xl mb-2"></i>
+          <p class="text-purple-400 text-sm opacity-50">Il tuo diario è ancora vuoto</p>
+        </div>
+        <div id="gratitude-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ESPLORA I PILASTRI ===== -->
+  <section class="reveal mb-10">
+    <div class="glass p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
+          <i class="fa-solid fa-compass text-blue-300"></i>
+        </div>
+        <h2 class="font-display text-xl text-gold-gradient font-semibold">Esplora i Pilastri</h2>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="pillar-tab active" onclick="setPillar('essere', this)" data-pillar="essere">
+          <i class="fa-solid fa-circle-dot mr-1.5"></i>Essere
+        </button>
+        <button class="pillar-tab" onclick="setPillar('creare', this)" data-pillar="creare">
+          <i class="fa-solid fa-wand-sparkles mr-1.5"></i>Creare
+        </button>
+        <button class="pillar-tab" onclick="setPillar('evolvere', this)" data-pillar="evolvere">
+          <i class="fa-solid fa-dna mr-1.5"></i>Evolvere
+        </button>
+        <button class="pillar-tab" onclick="setPillar('rilasciare', this)" data-pillar="rilasciare">
+          <i class="fa-solid fa-leaf mr-1.5"></i>Rilasciare
+        </button>
+      </div>
+
+      <div id="pillar-content"></div>
+    </div>
+  </section>
+
+  <!-- ===== TUTTE LE 60 LEGGI ===== -->
+  <section class="reveal mb-10">
+    <div class="glass p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center">
+          <i class="fa-solid fa-scroll text-gold"></i>
+        </div>
+        <h2 class="font-display text-xl text-gold-gradient font-semibold">Le 60 Leggi Universali</h2>
+      </div>
+      <div id="all-laws-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 opacity-0 pointer-events-none">
+  <div class="glass-gold px-5 py-3 flex items-center gap-2 text-sm font-medium text-gold">
+    <i id="toast-icon" class="fa-solid fa-check-circle"></i>
+    <span id="toast-msg">Salvato!</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA: 60 UNIVERSAL LAWS
+// ============================================================
+const LAWS = [
+  { id:1,  name:"Legge dell'Attrazione",     desc:"Ciò che pensi e senti con intensità diventa la calamita della tua realtà. La mente è un magnete che attira la frequenza dei propri pensieri dominanti.", challenge:"Trascorri 5 minuti visualizzando con dettaglio vivido un obiettivo che desideri. Senti le emozioni come se fosse già realtà.", pillar:"creare" },
+  { id:2,  name:"Legge del Karma",           desc:"Ogni azione genera una reazione equivalente. L'universo è un sistema perfettamente bilanciato: ciò che semini nel mondo, torna a te moltiplicato.", challenge:"Compì oggi un gesto di gentilezza disinteressato verso qualcuno. Non aspettarti nulla in cambio.", pillar:"evolvere" },
+  { id:3,  name:"Legge della Vibrazione",    desc:"Tutto nell'universo è in costante movimento e vibrazione. La tua frequenza vibrazionale attira esperienze della stessa frequenza.", challenge:"Identifica 3 abitudini che abbassano la tua vibrazione e scegli consapevolmente di sostituirne una oggi.", pillar:"essere" },
+  { id:4,  name:"Legge del Distacco",        desc:"Paradossalmente, lasciar andare il risultato che desideri con più forza accelera la sua manifestazione. Il distacco non è indifferenza, è fiducia profonda.", challenge:"Scrivi ciò a cui sei più aggrappato. Poi dichiarai ad alta voce: 'Ti libero con amore e fiducia.'", pillar:"rilasciare" },
+  { id:5,  name:"Legge della Corrispondenza",desc:"'Come è dentro, così è fuori.' La tua realtà esterna è uno specchio fedele del tuo stato interiore. Cambia dentro per cambiare fuori.", challenge:"Osserva un aspetto della tua vita esteriore che non ti piace. Cerca il suo equivalente interno e lavoraci.", pillar:"essere" },
+  { id:6,  name:"Legge del Ritmo",           desc:"Tutto fluisce e rifluisce. Dopo ogni notte arriva l'alba, dopo ogni inverno la primavera. I cicli sono sacri e inevitabili.", challenge:"Accetta senza resistenza una situazione 'invernale' della tua vita. Confida che la primavera arriverà.", pillar:"rilasciare" },
+  { id:7,  name:"Legge della Causa-Effetto", desc:"Nulla accade per caso. Ogni effetto ha una causa precisa. Sei il principale creatore delle tue circostanze attraverso le tue scelte.", challenge:"Identifica un problema ricorrente e traccia la catena di cause che lo ha generato. Quale causa puoi modificare?", pillar:"evolvere" },
+  { id:8,  name:"Legge della Polarità",      desc:"Ogni cosa ha il suo opposto. Freddo e caldo sono la stessa cosa in gradi diversi. Ogni problema contiene il seme della sua soluzione.", challenge:"Prendi una situazione difficile e trova genuinamente tre aspetti positivi in essa.", pillar:"essere" },
+  { id:9,  name:"Legge del Gender",          desc:"Tutto ha principi maschili e femminili: azione e ricettività, dare e ricevere. L'equilibrio tra i due crea armonia e flusso.", challenge:"Valuta se nella tua vita stai troppo 'spingendo' (maschile) o troppo 'aspettando' (femminile). Riequilibra.", pillar:"essere" },
+  { id:10, name:"Legge della Mentalismo",    desc:"L'universo è mentale. Tutto è mente. La realtà fisica è una proiezione della coscienza che la osserva.", challenge:"Prima di dormire, programma consciamente i tuoi pensieri per i prossimi 5 minuti. Osserva come influenzano il tono del giorno dopo.", pillar:"creare" },
+  { id:11, name:"Legge della Crescita",      desc:"La vita è in costante espansione. Ogni essere ha il potenziale di evolvere oltre i propri limiti attuali. La stagnazione è contro natura.", challenge:"Impara una cosa nuova oggi, anche piccola. Un fatto, una parola, una skill. Nutri la mente.", pillar:"evolvere" },
+  { id:12, name:"Legge dell'Unità",          desc:"Nonostante le apparenze, tutto è connesso. Siamo espressioni diverse di un'unica coscienza universale.", challenge:"Trova un punto in comune profondo con una persona con cui sei in conflitto o disaccordo.", pillar:"essere" },
+  { id:13, name:"Legge dell'Abbondanza",     desc:"L'universo è infinitamente abbondante. La scarsità è una percezione della mente, non una realtà assoluta.", challenge:"Conta le prove di abbondanza nella tua vita: aria, luce, acqua, affetti. Elenca almeno 10.", pillar:"creare" },
+  { id:14, name:"Legge della Gratitudine",   desc:"La gratitudine è il magnete più potente dell'universo. Ciò per cui sei grato si moltiplica nella tua vita.", challenge:"Scrivi una lettera di gratitudine a qualcuno che ha avuto un impatto positivo su di te. Inviala o conservala.", pillar:"creare" },
+  { id:15, name:"Legge del Perdono",         desc:"Il perdono non è per gli altri, è per te. Liberarti dal rancore è l'atto più potente di auto-liberazione che puoi compiere.", challenge:"Identifica qualcuno (incluso te stesso) verso cui nutri rancore. Pratica il perdono silenzioso per 3 minuti.", pillar:"rilasciare" },
+  { id:16, name:"Legge dell'Intenzione",     desc:"L'intenzione è il potere direttivo dell'energia. Dove va l'attenzione va l'energia, dove va l'energia si manifesta la realtà.", challenge:"Prima di ogni azione importante oggi, prenditi 30 secondi per dichiarare la tua intenzione.", pillar:"creare" },
+  { id:17, name:"Legge della Fede",          desc:"La fede autentica muove la realtà. Non è credenza cieca ma certezza interiore basata sulla comprensione delle leggi universali.", challenge:"Agisci come se il tuo obiettivo più audace fosse già in corso di realizzazione. Anche una sola azione.", pillar:"creare" },
+  { id:18, name:"Legge della Responsabilità",desc:"Sei responsabile al 100% della tua esperienza di vita. Smettere di fare la vittima è il primo atto di vero potere personale.", challenge:"Identifica una situazione in cui ti sei sentito vittima. Chiedi: 'Qual è stata la mia parte in questo?'", pillar:"evolvere" },
+  { id:19, name:"Legge dell'Azione",         desc:"Pensieri e intenzioni senza azione restano sogni. L'universo risponde al movimento. Il primo passo, anche se imperfetto, attiva la magia.", challenge:"Prendi il primo passo verso un progetto che stai rimandando da tempo. Anche 5 minuti bastano.", pillar:"creare" },
+  { id:20, name:"Legge della Pace",          desc:"La pace interiore è il fondamento di ogni prosperità e creatività. Non è assenza di problemi, ma tranquillità nonostante essi.", challenge:"Pratica 10 minuti di silenzio consapevole. Nessun telefono, nessuna musica. Solo tu e il presente.", pillar:"essere" },
+  { id:21, name:"Legge della Trasmutazione",  desc:"Ogni energia può essere trasformata. Il dolore diventa saggezza, la paura diventa coraggio, il limite diventa potere.", challenge:"Scegli un'emozione difficile che stai vivendo e chiedi: 'Cosa vuole insegnarmi questa sensazione?'", pillar:"evolvere" },
+  { id:22, name:"Legge del Servizio",         desc:"Il vero successo nasce dal contribuire agli altri. Chi serve senza aspettarsi nulla, riceve in abbondanza ciò di cui ha bisogno.", challenge:"Fai oggi qualcosa di utile per qualcuno senza che te lo chieda. Osserva come ti senti dopo.", pillar:"creare" },
+  { id:23, name:"Legge della Perfezione",     desc:"A un livello fondamentale tutto è già perfetto. La ricerca di perfezione umana nasce dall'incomprensione del processo evolutivo.", challenge:"Accetta un aspetto di te stesso che hai sempre giudicato come un difetto. Riformulalo come un dono unico.", pillar:"essere" },
+  { id:24, name:"Legge del Presente",         desc:"L'unico momento reale è ora. Passato e futuro sono costruzioni mentali. La vita si vive sempre e solo nel momento presente.", challenge:"Ogni ora, per un secondo, torna consapevolmente al momento presente. Sentiti, ascoltati, osservati.", pillar:"essere" },
+  { id:25, name:"Legge dell'Armonia",         desc:"L'universo tende naturalmente all'equilibrio e all'armonia. La disarmonia è un segnale che qualcosa chiede di essere riallineato.", challenge:"Identifica un'area della tua vita fuori armonia. Quale piccolo passo verso l'equilibrio puoi fare oggi?", pillar:"essere" },
+  { id:26, name:"Legge della Gerarchia",       desc:"Tutto nell'universo è organizzato in livelli di coscienza e complessità. Ogni livello ha la sua funzione e la sua dignità.", challenge:"Rispetta oggi qualcuno che consideri 'inferiore' o 'superiore' con la stessa dignità. Osserva cosa cambia.", pillar:"evolvere" },
+  { id:27, name:"Legge della Prosperità",      desc:"La prosperità è il tuo stato naturale. Le credenze di scarsità e indegnità sono filtri acquisiti, non verità universali.", challenge:"Scrivi 5 credenze limitanti sul denaro o sulla prosperità. Riscrivi ciascuna in chiave positiva.", pillar:"creare" },
+  { id:28, name:"Legge della Resistenza",      desc:"Ciò a cui resisti persiste. Ciò che accetti con consapevolezza perde il suo potere su di te e si trasforma.", challenge:"Smetti di combattere mentalmente qualcosa che non puoi controllare. Dichiara: 'Accetto ciò che è.'", pillar:"rilasciare" },
+  { id:29, name:"Legge del Vuoto",             desc:"Per ricevere il nuovo devi creare spazio. Il vuoto attira il pieno. Lasciare andare il vecchio è il prerequisito per il nuovo.", challenge:"Libera oggi qualcosa di fisico: svuota un cassetto, dona vestiti. Il vuoto fisico crea spazio energetico.", pillar:"rilasciare" },
+  { id:30, name:"Legge dell'Impermanenza",     desc:"Nulla dura per sempre. Ogni situazione, ogni emozione, ogni ciclo è temporaneo. Questa legge è sia liberatoria che sacra.", challenge:"Guardando una difficoltà presente, ricordati: 'Anche questo passerà.' Scrivi questa frase e portala con te.", pillar:"rilasciare" },
+  { id:31, name:"Legge del Pensiero",          desc:"Sei ciò che pensi. I pensieri ripetuti diventano convinzioni, le convinzioni diventano realtà. La mente crea prima di tutto.", challenge:"Monitora i tuoi 10 pensieri più frequenti oggi. Quanti sono costruttivi? Quanti sabotatori?", pillar:"essere" },
+  { id:32, name:"Legge della Verità",          desc:"La verità ha una qualità vibrazionale unica che la distingue dalla menzogna. Vivere in autenticità allinea la tua energia con l'universo.", challenge:"Di' una verità difficile — a te stesso o a qualcun altro — con gentilezza ma con chiarezza.", pillar:"essere" },
+  { id:33, name:"Legge dell'Amore",            desc:"L'amore è la forza creativa fondamentale dell'universo. Non un'emozione romantica, ma l'energia primordiale di connessione e vita.", challenge:"Compì un gesto d'amore verso te stesso oggi: nutriti bene, riposati, celebra una tua qualità.", pillar:"essere" },
+  { id:34, name:"Legge della Compassione",     desc:"La compassione autentica vede il divino nell'altro nonostante le sue imperfezioni. È la risposta all'unità compresa con il cuore.", challenge:"Esercita la compassione verso qualcuno che ha sbagliato: immagina il dolore che lo ha portato a farlo.", pillar:"evolvere" },
+  { id:35, name:"Legge del Movimento",         desc:"La vita è movimento. Stagnare è andare contro il flusso naturale dell'esistenza. Ogni passo, in qualsiasi direzione, è progresso.", challenge:"Muovi il tuo corpo per almeno 20 minuti in modo consapevole. Senti l'energia scorrere.", pillar:"creare" },
+  { id:36, name:"Legge della Saggezza",        desc:"La vera saggezza nasce dall'esperienza vissuta con presenza e riflessione, non dall'accumulo di informazioni.", challenge:"Rifletti su un errore del passato. Quale saggezza ha portato nella tua vita? Scrivila.", pillar:"evolvere" },
+  { id:37, name:"Legge della Chiarezza",       desc:"La chiarezza nell'intenzione è potere. Un desiderio vago attira risultati vaghi. La precisione è la madre della manifestazione.", challenge:"Definisci un obiettivo con precisione assoluta: cosa, quando, perché. Scrivi i dettagli senza censure.", pillar:"creare" },
+  { id:38, name:"Legge del Coraggio",          desc:"Il coraggio non è assenza di paura, ma azione nonostante la paura. È il muscolo che si sviluppa solo attraverso l'uso.", challenge:"Fai oggi una cosa che ti spaventa leggermente. La piccola paura vinta costruisce coraggio per le grandi.", pillar:"evolvere" },
+  { id:39, name:"Legge dell'Intuizione",       desc:"L'intuizione è la voce dell'anima. È una forma di conoscenza più rapida e profonda della mente razionale.", challenge:"Prima di una decisione importante, siediti in silenzio. Chiedi alla tua intuizione. Ascolta il primo impulso.", pillar:"essere" },
+  { id:40, name:"Legge della Fiducia",         desc:"La fiducia nell'universo è il coraggio di procedere senza vedere l'intero cammino. È fede attiva, non passiva.", challenge:"Identifica un'area in cui non ti fidi del processo. Scrivi 3 prove che l'universo ti ha già supportato.", pillar:"rilasciare" },
+  { id:41, name:"Legge dell'Equanimità",       desc:"L'equanimità è la capacità di mantenere il centro interiore nelle tempeste della vita. È la forza silenziosa dei maestri.", challenge:"Di fronte a una notizia difficile, prenditi un respiro prima di reagire. Rispondi, non reagire.", pillar:"essere" },
+  { id:42, name:"Legge della Trasparenza",     desc:"Vivere in trasparenza con se stessi è il prerequisito per ogni crescita autentica. L'auto-inganno è il più grande ostacolo.", challenge:"Sii brutalmente onesto con te stesso su un'area in cui ti stai raccontando una storia comoda.", pillar:"evolvere" },
+  { id:43, name:"Legge dell'Allineamento",     desc:"Quando pensieri, parole e azioni sono allineate, diventi un canale perfetto per la manifestazione. La coerenza è potere.", challenge:"Verifica: le tue azioni di oggi sono coerenti con i tuoi valori e i tuoi obiettivi più profondi?", pillar:"creare" },
+  { id:44, name:"Legge della Pazienza",        desc:"L'universo opera su tempi divini, non umani. La pazienza non è rassegnazione, è fiducia attiva nel processo.", challenge:"Scegli un'area in cui vuoi accelerare. Pratica invece di fidarti dei tempi perfetti dell'universo.", pillar:"rilasciare" },
+  { id:45, name:"Legge della Generosità",      desc:"Dare liberamente e con gioia amplifica la tua vibrazione e attiva il principio di moltiplicazione universale.", challenge:"Dona qualcosa oggi senza aspettarti nulla: tempo, attenzione, un sorriso genuino, risorse.", pillar:"creare" },
+  { id:46, name:"Legge dell'Interdipendenza",  desc:"Nessuno esiste in isolamento. Siamo tutti intrecciati in una rete invisibile di influenze reciproche.", challenge:"Traccia la catena di persone che hanno contribuito alla tua vita oggi. Mostra gratitudine a una di esse.", pillar:"evolvere" },
+  { id:47, name:"Legge della Semplicità",      desc:"La verità profonda è sempre semplice. La complessità spesso nasconde confusione. Torna all'essenziale.", challenge:"Semplifica un aspetto della tua vita: un processo, un impegno, una relazione complicata inutilmente.", pillar:"rilasciare" },
+  { id:48, name:"Legge dell'Autenticità",      desc:"La tua versione più autentica è la più potente e magnetica. Le maschere costano energia e allontanano le persone giuste.", challenge:"In una conversazione oggi, esprimiti senza filtri o maschere. Sii completamente te stesso.", pillar:"essere" },
+  { id:49, name:"Legge della Creatività",      desc:"La creatività è la natura fondamentale dell'universo. Sei un essere creativo per definizione. La creatività è la tua firma cosmica.", challenge:"Crea qualcosa oggi, qualsiasi cosa: una ricetta, un disegno, un testo, una soluzione creativa a un problema.", pillar:"creare" },
+  { id:50, name:"Legge della Trasformazione",  desc:"La sofferenza non trasformata viene trasmessa. Ogni ferita è un'opportunità di alchimia interiore se affrontata con coscienza.", challenge:"Identifica una ferita che stai ancora portando. Chiedi: 'Come mi ha reso più forte e saggio?'", pillar:"evolvere" },
+  { id:51, name:"Legge dell'Intenzione Pura",  desc:"Le intenzioni pure — quelle allineate con il bene universale — hanno una forza di manifestazione incomparabile.", challenge:"Prima di un'azione importante, chiedi: 'Questa intenzione beneficia solo me o contribuisce anche agli altri?'", pillar:"creare" },
+  { id:52, name:"Legge della Ricettività",      desc:"Essere aperti e ricettivi è altrettanto importante quanto agire. Molte persone bloccano i propri doni rifiutando di ricevere.", challenge:"Accetta oggi un complimento, un favore o un'offerta di aiuto senza deflettere o minimizzare.", pillar:"rilasciare" },
+  { id:53, name:"Legge della Dualità",          desc:"Per ogni luce c'è un'ombra, per ogni forza una debolezza. Integrare gli opposti è il percorso verso la completezza.", challenge:"Identifica una tua 'ombra' — un aspetto che rinneghi. Abbracciala come parte della tua completezza.", pillar:"evolvere" },
+  { id:54, name:"Legge del Consenso",           desc:"Le forze universali rispettano il libero arbitrio. Ciò che desideri deve essere un sì totale nella mente, nel cuore e nel corpo.", challenge:"Verifica il tuo 'sì' verso i tuoi obiettivi: mente, cuore e pancia sono tutti d'accordo?", pillar:"creare" },
+  { id:55, name:"Legge della Proporzione",      desc:"Le energie si esprimono in proporzione alla chiarezza e all'intensità del canale che le trasmette.", challenge:"Intensifica la tua pratica quotidiana di meditazione o riflessione anche solo di 5 minuti.", pillar:"essere" },
+  { id:56, name:"Legge della Leggerezza",       desc:"La leggerezza non è superficialità, è liberazione dal peso inutile. Ridere, giocare e meravigliarsi sono atti spirituali profondi.", challenge:"Fai qualcosa di puramente giocoso oggi, senza scopo produttivo. Permetti alla leggerezza di entrare.", pillar:"rilasciare" },
+  { id:57, name:"Legge della Completezza",      desc:"Non hai bisogno di nulla al di fuori di te per essere completo. La completezza è la tua natura originaria, non un traguardo futuro.", challenge:"Siediti per 5 minuti senza fare nulla. Senza telefono, senza obiettivi. Senti la completezza del presente.", pillar:"essere" },
+  { id:58, name:"Legge della Resilienza",       desc:"La capacità di ritornare al centro dopo le tempeste è il segno più alto di evoluzione spirituale e personale.", challenge:"Ricorda un momento in cui sei caduto e ti sei rialzato. Celebra quella forza. Portala nel presente.", pillar:"evolvere" },
+  { id:59, name:"Legge del Sacro",              desc:"Ogni momento, ogni persona, ogni esperienza contiene una dimensione sacra. La vita si trasforma quando la vivi con reverenza.", challenge:"Scegli un'attività ordinaria (mangiare, camminare, respirare) e vivila oggi con piena sacralità e presenza.", pillar:"essere" },
+  { id:60, name:"Legge dell'Infinito",          desc:"Sei un essere infinito che vive un'esperienza finita. La tua coscienza è senza confini. I limiti esistono solo nella mente.", challenge:"Visualizza te stesso senza nessuno dei limiti che ti sei auto-imposto. Come saresti? Come agiresti?", pillar:"creare" },
+];
+
+const RELEASE_QUOTES = [
+  "Ciò che hai rilasciato non ti definiva. Sei libero.",
+  "Come le foglie in autunno, ogni cosa trova il suo momento di lasciarsi andare.",
+  "Il distacco è il suono del respiro dell'universo. Hai respirato con lui.",
+  "Nulla di ciò che appartiene alla tua anima può essere perduto lasciando andare.",
+  "Hai fatto spazio. Ora il nuovo può entrare.",
+  "La leggerezza che senti è la tua vera natura che si rivela.",
+  "Rilasciare è il coraggio più sottile. L'universo ti onora per questo.",
+  "Dove c'era peso, ora c'è luce. Dove c'era paura, ora c'è spazio.",
+];
+
+const PILLARS = {
+  essere: {
+    icon: "fa-circle-dot",
+    color: "text-purple-300",
+    grad: "from-purple-900/40 to-purple-800/20",
+    border: "border-purple-500/30",
+    title: "Il Pilastro dell'Essere",
+    subtitle: "Essere autenticamente se stessi è la pratica più avanzata.",
+    laws: [3,5,8,9,12,20,23,24,25,31,32,33,39,41,48,55,57,59],
+    wisdom: "La tua semplice presenza, quando sei pienamente te stesso, è il contributo più grande che puoi offrire al mondo. Non devi fare di più — devi essere di più.",
+    practices: ["Meditazione quotidiana del mattino", "Journaling senza censure", "Osservazione dei propri pensieri", "Radicarsi nel corpo con il respiro"]
+  },
+  creare: {
+    icon: "fa-wand-sparkles",
+    color: "text-yellow-300",
+    grad: "from-yellow-900/30 to-amber-800/15",
+    border: "border-yellow-500/30",
+    title: "Il Pilastro del Creare",
+    subtitle: "Sei un essere creativo per natura divina.",
+    laws: [1,10,13,14,16,17,19,22,27,35,37,43,45,49,51,54,60],
+    wisdom: "Creare non significa produrre. Significa portare nel mondo qualcosa che prima non esisteva — un pensiero, un'emozione, una connessione. Ogni gesto consapevole è un atto creativo.",
+    practices: ["Visualizzazione creativa", "Scrittura degli obiettivi", "Azione ispirata quotidiana", "Gratitudine per le manifestazioni passate"]
+  },
+  evolvere: {
+    icon: "fa-dna",
+    color: "text-green-300",
+    grad: "from-green-900/30 to-emerald-800/15",
+    border: "border-green-500/30",
+    title: "Il Pilastro dell'Evolvere",
+    subtitle: "L'evoluzione non è opzionale — è il destino della coscienza.",
+    laws: [2,7,11,18,21,26,34,36,38,42,46,50,53,58],
+    wisdom: "Evolvere non è diventare qualcun altro. È rimuovere gli strati di ciò che non sei mai stato, rivelando la versione più autentica e luminosa di te.",
+    practices: ["Apprendimento deliberato quotidiano", "Autoconsapevolezza nelle reazioni", "Cercare scomodità come insegnamento", "Celebrare le ferite guarite"]
+  },
+  rilasciare: {
+    icon: "fa-leaf",
+    color: "text-blue-300",
+    grad: "from-blue-900/30 to-indigo-800/15",
+    border: "border-blue-500/30",
+    title: "Il Pilastro del Rilasciare",
+    subtitle: "Lasciare andare è la forma più alta di fiducia.",
+    laws: [4,6,15,28,29,30,40,44,47,52,56],
+    wisdom: "Teniamo così tanto a ciò che siamo diventati che dimentichiamo chi potremmo essere. Il distacco non è perdita — è la porta verso una libertà che non avevi immaginato possibile.",
+    practices: ["Pratica del perdono quotidiano", "Meditazione del lasciar andare", "Pulizia degli spazi fisici", "Revisione degli impegni non essenziali"]
+  }
+};
+
+// ============================================================
+// STATE & STORAGE
+// ============================================================
+let currentStreak = parseInt(localStorage.getItem('streak') || '0');
+let lastActivityDate = localStorage.getItem('lastActivityDate') || '';
+let todayLawId = null;
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function incrementStreak() {
+  const today = getTodayStr();
+  if (lastActivityDate === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  if (lastActivityDate === yesterday) {
+    currentStreak += 1;
+  } else if (lastActivityDate !== today) {
+    currentStreak = lastActivityDate ? 1 : currentStreak + 1;
+  }
+  lastActivityDate = today;
+  localStorage.setItem('streak', currentStreak);
+  localStorage.setItem('lastActivityDate', today);
+  renderStreak();
+}
+
+function renderStreak() {
+  document.getElementById('streak-count').textContent = currentStreak;
+  const labels = ['Inizia oggi', 'Primo giorno!', 'Continua così!', 'In fiamma!', 'Inarrestabile!', 'Leggendario!'];
+  const idx = Math.min(Math.floor(currentStreak / 3), labels.length - 1);
+  document.getElementById('streak-label').textContent = currentStreak > 0 ? `${currentStreak} ${currentStreak === 1 ? 'giorno' : 'giorni'} consecutivi` : labels[0];
+}
+
+// ============================================================
+// STARS
+// ============================================================
+function createStars() {
+  const sf = document.getElementById('starfield');
+  const count = window.innerWidth < 600 ? 60 : 120;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    const dur = Math.random() * 4 + 2;
+    const delay = Math.random() * 6;
+    const op = Math.random() * 0.6 + 0.2;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--dur:${dur}s;--max-op:${op};animation-delay:${delay}s`;
+    sf.appendChild(s);
+  }
+}
+
+// ============================================================
+// LAW OF THE DAY
+// ============================================================
+function drawLaw() {
+  if (typeof speechSynthesis !== 'undefined') { speechSynthesis.cancel(); setTtsState(false); }
+  const law = LAWS[Math.floor(Math.random() * LAWS.length)];
+  todayLawId = law.id;
+  document.getElementById('law-number').textContent = law.id;
+  document.getElementById('law-name').textContent = law.name;
+  document.getElementById('law-desc').textContent = law.desc;
+  document.getElementById('law-challenge').textContent = law.challenge;
+  const card = document.getElementById('law-card');
+  const placeholder = document.getElementById('law-placeholder');
+  placeholder.style.display = 'none';
+  card.classList.remove('hidden-card');
+  card.classList.add('hidden-card');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.classList.remove('hidden-card');
+      card.classList.add('visible-card');
+    });
+  });
+}
+
+function markChallengeDone() {
+  if (!todayLawId) { showToast('Estrai prima la Legge del Giorno!', 'fa-exclamation-circle'); return; }
+  incrementStreak();
+  showToast('Sfida completata! La tua vibrazione sale 🔥', 'fa-fire');
+}
+
+// ============================================================
+// PARTICLE CANVAS
+// ============================================================
+let particles = [];
+let animFrame;
+
+function createParticles(canvas, text) {
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: (Math.random() - 1.5) * 2,
+      alpha: Math.random() * 0.8 + 0.2,
+      size: Math.random() * 3 + 1,
+      color: Math.random() > 0.5 ? `rgba(212,175,55,` : `rgba(167,139,250,`,
+      life: 1,
+      decay: Math.random() * 0.012 + 0.006
+    });
+  }
+  animateParticles(ctx, canvas);
+}
+
+function animateParticles(ctx, canvas) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let alive = false;
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.04;
+    p.life -= p.decay;
+    p.alpha = Math.max(0, p.life * 0.8);
+    if (p.life > 0) {
+      alive = true;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + p.alpha + ')';
+      ctx.fill();
+    }
+  });
+  if (alive) animFrame = requestAnimationFrame(() => animateParticles(ctx, canvas));
+  else ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ============================================================
+// RITUAL OF RELEASE
+// ============================================================
+function performRelease() {
+  const textarea = document.getElementById('ritual-textarea');
+  const text = textarea.value.trim();
+  if (!text) { showToast('Scrivi prima il tuo pensiero', 'fa-pen'); return; }
+  const textDisplay = document.getElementById('ritual-text-display');
+  const releaseMsg = document.getElementById('release-message');
+  const canvas = document.getElementById('particle-canvas');
+  const quote = RELEASE_QUOTES[Math.floor(Math.random() * RELEASE_QUOTES.length)];
+  document.getElementById('release-quote').textContent = quote;
+  createParticles(canvas, text);
+  textDisplay.classList.add('dissolving');
+  setTimeout(() => {
+    textDisplay.style.display = 'none';
+    releaseMsg.style.display = 'block';
+    textarea.value = '';
+    incrementStreak();
+  }, 900);
+  setTimeout(() => {
+    cancelAnimationFrame(animFrame);
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    releaseMsg.style.display = 'none';
+    textDisplay.classList.remove('dissolving');
+    textDisplay.style.display = 'block';
+  }, 5500);
+}
+
+// ============================================================
+// GRATITUDE DIARY
+// ============================================================
+function saveGratitude() {
+  const vals = [
+    document.getElementById('grat-1').value.trim(),
+    document.getElementById('grat-2').value.trim(),
+    document.getElementById('grat-3').value.trim()
+  ].filter(Boolean);
+  if (vals.length === 0) { showToast('Scrivi almeno una cosa!', 'fa-pen'); return; }
+  const entries = JSON.parse(localStorage.getItem('gratitude') || '[]');
+  const today = new Date().toLocaleDateString('it-IT', { day:'numeric', month:'long', year:'numeric' });
+  entries.unshift({ date: today, items: vals });
+  if (entries.length > 30) entries.pop();
+  localStorage.setItem('gratitude', JSON.stringify(entries));
+  document.getElementById('grat-1').value = '';
+  document.getElementById('grat-2').value = '';
+  document.getElementById('grat-3').value = '';
+  renderGratitude();
+  incrementStreak();
+  showToast('Salvato nel tuo diario ✨', 'fa-heart');
+}
+
+function renderGratitude() {
+  const entries = JSON.parse(localStorage.getItem('gratitude') || '[]');
+  const list = document.getElementById('gratitude-list');
+  const empty = document.getElementById('gratitude-empty');
+  if (!entries.length) {
+    empty.classList.remove('hidden');
+    list.innerHTML = '';
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = entries.map((e, i) => `
+    <div class="gratitude-item glass p-4 rounded-2xl" id="gentry-${i}" style="animation-delay:${i * 0.08}s">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-calendar-days text-gold/50 text-xs"></i>
+          <span class="text-gold/60 text-xs">${e.date}</span>
+        </div>
+        <button onclick="deleteGratitude(${i})" title="Elimina" class="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-red-500/20 hover:scale-110 group">
+          <i class="fa-solid fa-trash-can text-purple-400/40 group-hover:text-red-400 text-xs transition-colors"></i>
+        </button>
+      </div>
+      <ul class="space-y-1">
+        ${e.items.map(it => `<li class="flex items-start gap-2 text-purple-100 text-sm"><i class="fa-solid fa-star text-yellow-400 text-xs mt-0.5 flex-shrink-0"></i><span>${it}</span></li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function deleteGratitude(index) {
+  const el = document.getElementById(`gentry-${index}`);
+  if (el) {
+    el.style.transition = 'all 0.35s ease';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(20px) scale(0.95)';
+    setTimeout(() => {
+      const entries = JSON.parse(localStorage.getItem('gratitude') || '[]');
+      entries.splice(index, 1);
+      localStorage.setItem('gratitude', JSON.stringify(entries));
+      renderGratitude();
+      showToast('Voce rimossa dal diario', 'fa-trash-can');
+    }, 350);
+  }
+}
+
+// ============================================================
+// PILLARS
+// ============================================================
+let activePillar = 'essere';
+
+function setPillar(key, btn) {
+  activePillar = key;
+  document.querySelectorAll('.pillar-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const content = document.getElementById('pillar-content');
+  content.classList.add('switching');
+  setTimeout(() => {
+    renderPillar(key);
+    content.classList.remove('switching');
+  }, 350);
+}
+
+function renderPillar(key) {
+  const p = PILLARS[key];
+  const lawList = p.laws.slice(0, 8).map(id => {
+    const l = LAWS.find(x => x.id === id);
+    return `<div class="flex items-center gap-2 text-sm text-purple-200 opacity-80">
+      <span class="law-badge" style="width:24px;height:24px;font-size:0.65rem">${l.id}</span>
+      <span>${l.name}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('pillar-content').innerHTML = `
+    <div class="glass bg-gradient-to-br ${p.grad} border ${p.border} rounded-2xl p-5 md:p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fa-solid ${p.icon} ${p.color} text-xl"></i>
+        <div>
+          <h3 class="font-display text-lg font-bold text-white">${p.title}</h3>
+          <p class="text-purple-300 text-xs mt-0.5">${p.subtitle}</p>
+        </div>
+      </div>
+      <p class="text-purple-100 text-sm leading-relaxed mb-5 italic opacity-90">"${p.wisdom}"</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gold/70 mb-3">Leggi Correlate</p>
+          <div class="space-y-2">${lawList}</div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gold/70 mb-3">Pratiche del Pilastro</p>
+          <ul class="space-y-2">
+            ${p.practices.map(pr => `<li class="flex items-start gap-2 text-sm text-purple-200 opacity-80"><i class="fa-solid fa-circle-check ${p.color} text-xs mt-1 flex-shrink-0"></i><span>${pr}</span></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// ALL 60 LAWS GRID
+// ============================================================
+function renderAllLaws() {
+  const grid = document.getElementById('all-laws-grid');
+  grid.innerHTML = LAWS.map(law => `
+    <div class="glass p-3 rounded-xl hover:bg-white/5 transition-all duration-300 cursor-pointer group" onclick="quickView(${law.id})">
+      <div class="flex items-center gap-3">
+        <span class="law-badge group-hover:scale-110 transition-transform">${law.id}</span>
+        <div>
+          <p class="text-sm font-medium text-purple-100 group-hover:text-gold transition-colors">${law.name}</p>
+          <p class="text-xs text-purple-400 capitalize">${law.pillar}</p>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gold/20 group-hover:text-gold/60 text-xs ml-auto transition-colors"></i>
+      </div>
+    </div>
+  `).join('');
+}
+
+function quickView(id) {
+  if (typeof speechSynthesis !== 'undefined') { speechSynthesis.cancel(); setTtsState(false); }
+  const law = LAWS.find(l => l.id === id);
+  if (!law) return;
+  todayLawId = law.id;
+  document.getElementById('law-number').textContent = law.id;
+  document.getElementById('law-name').textContent = law.name;
+  document.getElementById('law-desc').textContent = law.desc;
+  document.getElementById('law-challenge').textContent = law.challenge;
+  const card = document.getElementById('law-card');
+  const placeholder = document.getElementById('law-placeholder');
+  placeholder.style.display = 'none';
+  card.classList.remove('visible-card', 'hidden-card');
+  void card.offsetWidth;
+  card.classList.add('visible-card');
+  document.getElementById('law-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast(`Legge #${law.id} selezionata`, 'fa-scroll');
+}
+
+// ============================================================
+// TEXT-TO-SPEECH
+// ============================================================
+let ttsUtterance = null;
+let ttsActive = false;
+
+function getItalianVoice() {
+  const voices = speechSynthesis.getVoices();
+  // Prefer female Italian voices, calmer ones first
+  const preferred = [
+    v => v.lang === 'it-IT' && /alice|sofia|google italiano/i.test(v.name),
+    v => v.lang === 'it-IT' && v.name.toLowerCase().includes('female'),
+    v => v.lang === 'it-IT',
+    v => v.lang.startsWith('it'),
+  ];
+  for (const test of preferred) {
+    const match = voices.find(test);
+    if (match) return match;
+  }
+  return voices[0] || null;
+}
+
+function setTtsState(active) {
+  ttsActive = active;
+  const btn = document.getElementById('tts-btn');
+  const icon = document.getElementById('tts-icon');
+  const label = document.getElementById('tts-label');
+  if (!btn) return;
+  if (active) {
+    btn.classList.add('speaking');
+    icon.className = 'fa-solid fa-circle-pause tts-pulse';
+    label.textContent = 'In ascolto…';
+  } else {
+    btn.classList.remove('speaking');
+    icon.className = 'fa-solid fa-volume-high';
+    label.textContent = 'Ascolta';
+  }
+}
+
+function toggleSpeak() {
+  if (!('speechSynthesis' in window)) {
+    showToast('Sintesi vocale non supportata', 'fa-triangle-exclamation');
+    return;
+  }
+  const name = document.getElementById('law-name')?.textContent;
+  if (!name || name === '—') {
+    showToast('Estrai prima una legge!', 'fa-exclamation-circle');
+    return;
+  }
+  if (ttsActive) {
+    speechSynthesis.cancel();
+    setTtsState(false);
+    return;
+  }
+
+  const desc = document.getElementById('law-desc').textContent;
+  const challenge = document.getElementById('law-challenge').textContent;
+  const script = `${name}. ${desc}. La sfida pratica di oggi: ${challenge}`;
+
+  ttsUtterance = new SpeechSynthesisUtterance(script);
+  ttsUtterance.lang = 'it-IT';
+  ttsUtterance.rate = 0.88;   // calm, meditative pace
+  ttsUtterance.pitch = 0.95;  // slightly lower, serene
+  ttsUtterance.volume = 1;
+
+  // Voice selection — voices may load async
+  const trySetVoice = () => {
+    const voice = getItalianVoice();
+    if (voice) ttsUtterance.voice = voice;
+  };
+  trySetVoice();
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.addEventListener('voiceschanged', trySetVoice, { once: true });
+  }
+
+  ttsUtterance.onstart = () => setTtsState(true);
+  ttsUtterance.onend = () => setTtsState(false);
+  ttsUtterance.onerror = () => setTtsState(false);
+
+  speechSynthesis.cancel(); // clear queue
+  speechSynthesis.speak(ttsUtterance);
+}
+
+// Stop speech if user draws a new law
+const _origDrawLaw = typeof drawLaw === 'function' ? drawLaw : null;
+
+
+function showToast(msg, icon = 'fa-check-circle') {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').className = `fa-solid ${icon}`;
+  toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+  toast.classList.add('opacity-100');
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'pointer-events-none');
+    toast.classList.remove('opacity-100');
+  }, 2800);
+}
+
+// ============================================================
+// SCROLL REVEALS
+// ============================================================
+function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  renderStreak();
+  renderGratitude();
+  renderPillar('essere');
+  renderAllLaws();
+  initReveal();
+
+  // Check streak continuity
+  const today = getTodayStr();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  if (lastActivityDate && lastActivityDate !== today && lastActivityDate !== yesterday) {
+    currentStreak = 0;
+    localStorage.setItem('streak', '0');
+    renderStreak();
+  }
+});
+
+// Register service worker for offline / installable PWA support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>

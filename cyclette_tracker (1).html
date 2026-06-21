@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0f14">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>CycleTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2229;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #e8f93a;
+    --accent2: #3af9c0;
+    --accent3: #f93a7a;
+    --text: #f0f2f8;
+    --muted: #7a8090;
+    --r: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Subtle background texture */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  body::after {
+    content: ''; position: fixed; width: 340px; height: 340px; border-radius: 50%;
+    background: var(--accent); filter: blur(80px); opacity: 0.1;
+    top: -120px; left: -80px; pointer-events: none; z-index: 0;
+  }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(22,25,32,0.96); backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border2);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 4px 6px; gap: 4px; background: none; border: none; cursor: pointer;
+    color: var(--muted); font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    transition: color .18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active svg { stroke: var(--accent); }
+
+  /* ── PAGES ── */
+  .page { display: none; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  .container {
+    max-width: 600px; margin: 0 auto;
+    padding: 1rem 1rem calc(100px + var(--safe-bottom));
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 1rem 1rem 0.25rem;
+    position: relative; z-index: 1;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+  }
+  .logo svg { width: 24px; height: 24px; }
+  h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; }
+  h1 span { color: var(--accent); }
+  .subtitle { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 1px; }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .panel-title {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .panel-title::before {
+    content: ''; width: 3px; height: 13px;
+    background: var(--accent); border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── INPUTS ── */
+  .time-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .metrics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .metrics-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  .field label {
+    display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 5px; font-weight: 600; letter-spacing: 0.04em;
+  }
+  .field-wrap { position: relative; display: flex; align-items: center; }
+  .field-wrap input {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border2); border-radius: 10px;
+    padding: 0.7rem 2.6rem 0.7rem 0.8rem;
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 1.1rem; font-weight: 500; outline: none;
+    transition: border-color .2s;
+    -moz-appearance: textfield;
+    /* Bigger touch target */
+    min-height: 48px;
+  }
+  .field-wrap input::-webkit-inner-spin-button,
+  .field-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .field-wrap input:focus { border-color: var(--accent); }
+  .unit {
+    position: absolute; right: 9px; font-size: 0.65rem; color: var(--muted);
+    font-family: 'DM Mono', monospace; pointer-events: none; white-space: nowrap;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-save {
+    width: 100%; padding: 0.95rem; border-radius: 12px;
+    background: var(--accent); color: #0d0f14;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+    border: none; cursor: pointer; margin-top: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity .15s, transform .1s; min-height: 52px;
+  }
+  .btn-save:active { opacity: 0.85; transform: scale(0.98); }
+
+  .btn-ghost {
+    padding: 0.6rem 1rem; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-weight: 600; font-size: 0.8rem; cursor: pointer;
+    background: transparent; color: var(--muted); border: 1px solid var(--border2);
+    transition: color .15s; min-height: 40px;
+  }
+  .btn-ghost:active { color: var(--text); }
+  .btn-ghost.active-mode { border-color: var(--accent2); color: var(--text); }
+
+  /* ── STATS ── */
+  .stats-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .stat-card {
+    background: var(--surface2); border-radius: 12px;
+    padding: 1rem 0.9rem; border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .stat-card .bar {
+    position: absolute; bottom: 0; left: 0; height: 3px;
+    border-radius: 0 3px 0 0; transition: width .7s cubic-bezier(.4,0,.2,1);
+  }
+  .stat-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 1.75rem; font-weight: 500; margin-top: 3px; line-height: 1; }
+  .stat-unit { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── RINGS ── */
+  .rings-row { display: flex; justify-content: space-around; padding: 0.75rem 0 0.25rem; }
+  .ring-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .ring-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; text-align: center; max-width: 64px; line-height: 1.3; }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: var(--surface2); stroke-width: 5; }
+  .ring-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .7s cubic-bezier(.4,0,.2,1); }
+  .ring-center { font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 500; }
+
+  /* ── CHART ── */
+  .chart-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ── MOTIVATION ── */
+  .motivation-box {
+    background: var(--surface2); border-radius: 12px;
+    border: 1px solid rgba(58,249,192,.15); padding: 1rem;
+    margin-bottom: 8px;
+  }
+  .motivation-text { font-size: 0.95rem; font-weight: 700; color: var(--accent2); line-height: 1.45; }
+  .note-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 0.75rem; resize: none;
+    font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--text);
+    line-height: 1.55; min-height: 80px; outline: none;
+  }
+  .note-textarea::placeholder { color: var(--muted); }
+  .note-textarea:focus { border-color: var(--accent); }
+
+  /* ── HISTORY ── */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    background: var(--surface2); border-radius: 12px;
+    padding: 0.9rem 1rem; border: 1px solid var(--border);
+    animation: slideIn .25s ease;
+    display: grid; grid-template-columns: 1fr 36px; gap: 8px; align-items: start;
+  }
+  @keyframes slideIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .hi-date { color: var(--muted); font-size: 0.7rem; margin-bottom: 6px; }
+  .hi-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hi-pill {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    background: var(--surface); border-radius: 6px; padding: 3px 8px; color: var(--muted);
+  }
+  .hi-pill b { color: var(--text); font-weight: 500; }
+  .hi-note { font-size: 0.78rem; color: var(--muted); margin-top: 6px; font-style: italic; line-height: 1.4; }
+  .del-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 1rem; padding: 6px; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; transition: color .15s, background .15s;
+    min-width: 36px; min-height: 36px;
+  }
+  .del-btn:active { color: var(--accent3); background: rgba(249,58,122,.1); }
+
+  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); font-size: 0.88rem; }
+  .empty-state svg { width: 36px; opacity: 0.25; margin-bottom: 0.75rem; display: block; margin-inline: auto; }
+
+  .page-header { padding: 1rem 1rem 0; position: relative; z-index: 1; }
+  .page-header h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.15rem; }
+  .page-header p { font-size: 0.75rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- PAGE: Inserisci -->
+<div class="page active" id="page-add">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="6" cy="17" r="4" stroke="#0d0f14" stroke-width="2.2"/>
+        <circle cx="18" cy="17" r="4" stroke="#0d0f14" stroke-width="2.2"/>
+        <circle cx="12" cy="7" r="2.5" stroke="#0d0f14" stroke-width="2"/>
+        <path d="M6 17 L12 7 L18 17" stroke="#0d0f14" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M6 17 L12 13 L18 17" stroke="#0d0f14" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Cycle<span>Track</span></h1>
+      <div class="subtitle">Registra ogni pedalata</div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="panel">
+      <div class="panel-title">Durata</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="field">
+          <label>Ore</label>
+          <div class="field-wrap">
+            <input type="number" id="hours" inputmode="numeric" min="0" max="23" placeholder="0">
+            <span class="unit">h</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Minuti</label>
+          <div class="field-wrap">
+            <input type="number" id="minutes" inputmode="numeric" min="0" max="59" placeholder="0">
+            <span class="unit">min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Prestazioni</div>
+      <div class="metrics-row">
+        <div class="field">
+          <label>Distanza</label>
+          <div class="field-wrap">
+            <input type="number" id="km" inputmode="decimal" min="0" step="0.1" placeholder="0.0">
+            <span class="unit">km</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Velocità</label>
+          <div class="field-wrap">
+            <input type="number" id="speed" inputmode="decimal" min="0" step="0.1" placeholder="0.0">
+            <span class="unit">km/h</span>
+          </div>
+        </div>
+      </div>
+      <div class="metrics-row" style="margin-bottom:0">
+        <div class="field">
+          <label>Calorie</label>
+          <div class="field-wrap">
+            <input type="number" id="cals" inputmode="numeric" min="0" placeholder="0">
+            <span class="unit">kcal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Note</div>
+      <textarea class="note-textarea" id="noteText" placeholder="Come è andata? Aggiungi una nota…"></textarea>
+    </div>
+
+    <button class="btn-save" onclick="saveSession()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12l5 5L19 7"/></svg>
+      Salva sessione
+    </button>
+  </div>
+</div>
+
+<!-- PAGE: Dashboard -->
+<div class="page" id="page-stats">
+  <div class="page-header">
+    <h2>Riepilogo</h2>
+    <p>I tuoi progressi complessivi</p>
+  </div>
+  <div class="container">
+    <div class="panel">
+      <div class="panel-title">Totali</div>
+      <div class="stats-2x2">
+        <div class="stat-card">
+          <div class="bar" style="background:var(--accent)" id="barTime"></div>
+          <div class="stat-label">Ore totali</div>
+          <div class="stat-value" id="totalTime">0</div>
+          <div class="stat-unit">ore pedalate</div>
+        </div>
+        <div class="stat-card">
+          <div class="bar" style="background:var(--accent2)" id="barKm"></div>
+          <div class="stat-label">Distanza</div>
+          <div class="stat-value" id="totalKm">0</div>
+          <div class="stat-unit">km totali</div>
+        </div>
+        <div class="stat-card">
+          <div class="bar" style="background:#f9c43a" id="barSpeed"></div>
+          <div class="stat-label">Vel. media</div>
+          <div class="stat-value" id="avgSpeed">0</div>
+          <div class="stat-unit">km/h medi</div>
+        </div>
+        <div class="stat-card">
+          <div class="bar" style="background:var(--accent3)" id="barCals"></div>
+          <div class="stat-label">Calorie</div>
+          <div class="stat-value" id="totalCals">0</div>
+          <div class="stat-unit">kcal totali</div>
+        </div>
+      </div>
+
+      <div class="rings-row">
+        <div class="ring-item">
+          <svg width="72" height="72" class="ring-svg" role="img" aria-label="Obiettivo km">
+            <circle class="ring-track" cx="36" cy="36" r="29"/>
+            <circle class="ring-fill" id="ringKm" cx="36" cy="36" r="29" stroke="var(--accent2)" stroke-dasharray="182" stroke-dashoffset="182"/>
+          </svg>
+          <div class="ring-center" id="ringKmPct">0%</div>
+          <div class="ring-label">km / 50</div>
+        </div>
+        <div class="ring-item">
+          <svg width="72" height="72" class="ring-svg" role="img" aria-label="Obiettivo calorie">
+            <circle class="ring-track" cx="36" cy="36" r="29"/>
+            <circle class="ring-fill" id="ringCals" cx="36" cy="36" r="29" stroke="var(--accent3)" stroke-dasharray="182" stroke-dashoffset="182"/>
+          </svg>
+          <div class="ring-center" id="ringCalsPct">0%</div>
+          <div class="ring-label">kcal / 2000</div>
+        </div>
+        <div class="ring-item">
+          <svg width="72" height="72" class="ring-svg" role="img" aria-label="Sessioni">
+            <circle class="ring-track" cx="36" cy="36" r="29"/>
+            <circle class="ring-fill" id="ringSess" cx="36" cy="36" r="29" stroke="var(--accent)" stroke-dasharray="182" stroke-dashoffset="182"/>
+          </svg>
+          <div class="ring-center" id="ringSessPct">0%</div>
+          <div class="ring-label">sessioni / 5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Andamento</div>
+      <div class="chart-tabs">
+        <button class="btn-ghost active-mode" id="btnKm" onclick="setChartMode('km')">Km</button>
+        <button class="btn-ghost" id="btnCals" onclick="setChartMode('cals')">Calorie</button>
+        <button class="btn-ghost" id="btnSpd" onclick="setChartMode('speed')">Velocità</button>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="mainChart" role="img" aria-label="Grafico andamento sessioni">Nessun dato.</canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Motivazione</div>
+      <div class="motivation-box">
+        <div class="motivation-text" id="motivationText">Registra la tua prima sessione per sbloccare i messaggi motivazionali! 🚴</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: Storico -->
+<div class="page" id="page-history">
+  <div class="page-header">
+    <h2>Storico</h2>
+    <p id="historyCount">Nessuna sessione</p>
+  </div>
+  <div class="container">
+    <div class="history-list" id="historyList">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Nessuna sessione registrata ancora
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-add" onclick="goPage('add')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Aggiungi
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="goPage('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="goPage('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+    Storico
+  </button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let sessions = JSON.parse(localStorage.getItem('cycletrack_v2') || '[]');
+let chart = null;
+let chartMode = 'km';
+
+function goPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.getElementById('nav-' + p).classList.add('active');
+  if (p === 'stats') { updateStats(); updateChart(); updateMotivation(); }
+  if (p === 'history') { updateHistory(); }
+  window.scrollTo(0, 0);
+}
+
+const motivations = [
+  [0, "Registra la tua prima sessione! 🚴"],
+  [1, "Prima sessione salvata! Ogni viaggio inizia con il primo giro di pedali. 💪"],
+  [3, "Tre sessioni! Stai costruendo un'abitudine vincente. 🔥"],
+  [5, "Cinque sessioni! Sei ufficialmente un atleta della cyclette. 🥇"],
+  [10, "Dieci sessioni! La tua perseveranza è ammirevole. ⚡"],
+  [20, "Stai pedalando verso la migliore versione di te stesso! 🌟"],
+];
+const bonusMsgs = [
+  "La costanza batte il talento ogni volta.",
+  "Ogni caloria bruciata è un passo avanti.",
+  "Il tuo futuro self ti ringrazierà.",
+  "Dolore temporaneo, risultati permanenti.",
+  "Non fermarti quando sei stanco — fermati quando hai finito.",
+  "Metti fieno in cascina ogni giorno. 🌾"
+];
+function getMotivation(n) {
+  let msg = motivations[0][1];
+  for (const [t, m] of motivations) { if (n >= t) msg = m; }
+  return msg + ' ' + bonusMsgs[n % bonusMsgs.length];
+}
+
+function fmtTime(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return h+'h '+m+'m';
+  if (m > 0) return m+'m '+sec+'s';
+  return sec+'s';
+}
+
+function saveSession() {
+  const h = parseInt(document.getElementById('hours').value)||0;
+  const m = parseInt(document.getElementById('minutes').value)||0;
+  const km = parseFloat(document.getElementById('km').value)||0;
+  const speed = parseFloat(document.getElementById('speed').value)||0;
+  const cals = parseInt(document.getElementById('cals').value)||0;
+  const note = document.getElementById('noteText').value.trim();
+  const totalSec = h*3600+m*60;
+  if (!totalSec && !km && !cals) { alert('Inserisci almeno un dato prima di salvare.'); return; }
+  sessions.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    totalSec, km, speed, cals, note
+  });
+  localStorage.setItem('cycletrack_v2', JSON.stringify(sessions));
+  ['hours','minutes','km','speed','cals'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('noteText').value='';
+  // Flash feedback
+  const btn = document.querySelector('.btn-save');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12l5 5L19 7"/></svg> Salvato!';
+  btn.style.background = 'var(--accent2)';
+  setTimeout(() => { btn.innerHTML = orig; btn.style.background = 'var(--accent)'; }, 1400);
+}
+
+function deleteSession(id) {
+  if (!confirm('Eliminare questa sessione?')) return;
+  sessions = sessions.filter(s => s.id !== id);
+  localStorage.setItem('cycletrack_v2', JSON.stringify(sessions));
+  updateHistory();
+}
+
+function updateStats() {
+  const totalSec = sessions.reduce((a,s)=>a+s.totalSec,0);
+  const totalKm = sessions.reduce((a,s)=>a+s.km,0);
+  const totalCals = sessions.reduce((a,s)=>a+s.cals,0);
+  const spdSess = sessions.filter(s=>s.speed>0);
+  const avgSpd = spdSess.length ? spdSess.reduce((a,s)=>a+s.speed,0)/spdSess.length : 0;
+  document.getElementById('totalTime').textContent = (totalSec/3600).toFixed(1);
+  document.getElementById('totalKm').textContent = totalKm.toFixed(1);
+  document.getElementById('avgSpeed').textContent = avgSpd.toFixed(1);
+  document.getElementById('totalCals').textContent = totalCals;
+  document.getElementById('barTime').style.width = sessions.length ? '80%' : '0%';
+  document.getElementById('barKm').style.width = sessions.length ? Math.min(100,totalKm/50*100).toFixed(0)+'%' : '0%';
+  document.getElementById('barSpeed').style.width = sessions.length ? Math.min(100,avgSpd/40*100).toFixed(0)+'%' : '0%';
+  document.getElementById('barCals').style.width = sessions.length ? Math.min(100,totalCals/2000*100).toFixed(0)+'%' : '0%';
+  const C = 182;
+  const setRing = (id, pId, val, max) => {
+    const pct = Math.min(1, val/max);
+    document.getElementById(id).style.strokeDashoffset = C - pct*C;
+    document.getElementById(pId).textContent = Math.round(pct*100)+'%';
+  };
+  setRing('ringKm','ringKmPct', totalKm, 50);
+  setRing('ringCals','ringCalsPct', totalCals, 2000);
+  setRing('ringSess','ringSessPct', sessions.length, 5);
+}
+
+function setChartMode(mode) {
+  chartMode = mode;
+  document.getElementById('btnKm').className = 'btn-ghost' + (mode==='km'?' active-mode':'');
+  document.getElementById('btnCals').className = 'btn-ghost' + (mode==='cals'?' active-mode':'');
+  document.getElementById('btnSpd').className = 'btn-ghost' + (mode==='speed'?' active-mode':'');
+  updateChart();
+}
+
+function updateChart() {
+  const list = [...sessions].reverse().slice(-10);
+  const labels = list.map(s => s.date.split(',')[0]);
+  const cfg = {
+    km:    { data: list.map(s=>s.km),    color:'#3af9c0', label:'km' },
+    cals:  { data: list.map(s=>s.cals),  color:'#f93a7a', label:'kcal' },
+    speed: { data: list.map(s=>s.speed), color:'#f9c43a', label:'km/h' }
+  };
+  const {data, color, label} = cfg[chartMode];
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { data, backgroundColor: color+'28', borderColor: color, borderWidth: 2, borderRadius: 6, borderSkipped: false, type:'bar', label },
+        { data, borderColor: color, backgroundColor:'transparent', borderWidth: 2, pointBackgroundColor: color, pointRadius: 3, tension: 0.4, type:'line', label: label+' line' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => c.dataset.type==='line'?null:`${c.parsed.y.toFixed(1)} ${label}` }}},
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#7a8090', font:{family:'DM Mono',size:10}, maxRotation:30, autoSkip:true} },
+        y: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#7a8090', font:{family:'DM Mono',size:10}}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function updateHistory() {
+  const el = document.getElementById('historyList');
+  const cnt = document.getElementById('historyCount');
+  cnt.textContent = sessions.length ? sessions.length + (sessions.length===1?' sessione':' sessioni') : 'Nessuna sessione';
+  if (!sessions.length) {
+    el.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Nessuna sessione registrata ancora</div>`;
+    return;
+  }
+  el.innerHTML = sessions.map(s => `
+    <div class="history-item">
+      <div>
+        <div class="hi-date">${s.date}</div>
+        <div class="hi-pills">
+          ${s.totalSec?`<span class="hi-pill">⏱ <b>${fmtTime(s.totalSec)}</b></span>`:''}
+          ${s.km?`<span class="hi-pill">🛣 <b>${s.km.toFixed(1)} km</b></span>`:''}
+          ${s.speed?`<span class="hi-pill">⚡ <b>${s.speed.toFixed(1)}</b></span>`:''}
+          ${s.cals?`<span class="hi-pill">🔥 <b>${s.cals}</b></span>`:''}
+        </div>
+        ${s.note?`<div class="hi-note">"${s.note}"</div>`:''}
+      </div>
+      <button class="del-btn" onclick="deleteSession(${s.id})" aria-label="Elimina sessione">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateMotivation() {
+  document.getElementById('motivationText').textContent = getMotivation(sessions.length);
+}
+
+// Init
+updateHistory();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
